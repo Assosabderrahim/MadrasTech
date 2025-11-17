@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { UserRole } from '../types';
 import { 
-    GraduationCapIcon, 
-    PresentationChartBarIcon, 
     BriefcaseIcon, 
-    UsersIcon,
     UserIcon,
     LockClosedIcon,
-    ArrowRightIcon
+    ArrowRightIcon,
+    CogIcon,
+    ShieldCheckIcon
 } from './icons';
 
 interface LandingPageProps {
@@ -67,9 +66,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => {
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-br from-cyan-50 to-blue-100">
-      <header className="text-center mb-12">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-2">MadrasTech</h1>
-        <p className="text-xl text-gray-600">المدرسة المغربية الذكية</p>
+      <header className="text-center mb-12 max-w-3xl">
+        <h1 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-400 mb-2">
+            MadrasTech
+        </h1>
+        <h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-4">منصة تعليمية اجتماعية ذكية</h2>
+        <p className="text-xl text-gray-700 mb-6">مرحباً بك في مستقبل التعليم الرقمي</p>
+        <p className="text-lg text-gray-600 leading-relaxed">
+            منصة تجمع بين الأساتذة، التلاميذ، الإدارة، وأولياء الأمور في فضاء تفاعلي واحد، مدعوم بالمساعدة الذكية وأدوات التعلم الرقمية الحديثة
+        </p>
       </header>
       <main className="w-full max-w-4xl">
         {loginForRole ? (
@@ -120,25 +125,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               <RoleCard
                 role={UserRole.STUDENT}
-                icon={<GraduationCapIcon className="h-12 w-12 text-white" />}
+                icon={<UserIcon className="h-12 w-12 text-white" />}
                 color="bg-blue-500 hover:bg-blue-600"
                 onSelect={setLoginForRole}
               />
               <RoleCard
                 role={UserRole.TEACHER}
-                icon={<PresentationChartBarIcon className="h-12 w-12 text-white" />}
+                icon={<BriefcaseIcon className="h-12 w-12 text-white" />}
                 color="bg-teal-500 hover:bg-teal-600"
                 onSelect={setLoginForRole}
               />
               <RoleCard
                 role={UserRole.ADMIN}
-                icon={<BriefcaseIcon className="h-12 w-12 text-white" />}
+                icon={<CogIcon className="h-12 w-12 text-white" />}
                 color="bg-indigo-500 hover:bg-indigo-600"
                 onSelect={setLoginForRole}
               />
               <RoleCard
                 role={UserRole.PARENT}
-                icon={<UsersIcon className="h-12 w-12 text-white" />}
+                icon={<ShieldCheckIcon className="h-12 w-12 text-white" />}
                 color="bg-amber-500 hover:bg-amber-600"
                 onSelect={setLoginForRole}
               />

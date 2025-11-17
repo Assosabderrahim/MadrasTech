@@ -22,15 +22,20 @@ export enum LearningStyle {
   GENERAL = 'عام',
 }
 
-export enum LessonContentType {
+export enum LessonStepType {
+    TEXT = 'text',
     VIDEO = 'video',
+    QUIZ = 'quiz',
+    SIMULATION = 'simulation',
     PDF = 'pdf',
-    PRESENTATION = 'presentation',
 }
 
-export interface LessonContent {
-    type: LessonContentType;
-    url: string;
+export interface LessonStep {
+    id: string;
+    type: LessonStepType;
+    title?: string;
+    content: string; // Markdown text, video URL, etc.
+    quizQuestion?: QuizQuestion;
 }
 
 export interface Comment {
@@ -47,7 +52,7 @@ export interface Lesson {
   status: ContentStatus;
   reminder?: Date;
   comments: Comment[];
-  content?: LessonContent;
+  steps?: LessonStep[];
 }
 
 export interface Exercise {
@@ -57,6 +62,7 @@ export interface Exercise {
   status: ContentStatus;
   reminder?: Date;
   comments: Comment[];
+  score?: number;
 }
 
 export interface Subject {
@@ -83,6 +89,9 @@ export interface Book {
   author: string;
   category: string;
   coverImage: string;
+  description?: string;
+  firstPage?: string;
+  pdfUrl?: string;
 }
 
 export interface Activity {
@@ -91,6 +100,7 @@ export interface Activity {
   description: string;
   date: string;
   image: string;
+  icon: ReactElement<{ className?: string }>;
 }
 
 export interface Grade {
@@ -136,6 +146,14 @@ export interface CustomField {
     value: string;
 }
 
+export interface TimetableEntry {
+    day: string;
+    timeSlot: string;
+    subject: string;
+    className?: string;
+    teacherName?: string;
+}
+
 export interface Student {
     id: string;
     name: string;
@@ -148,6 +166,10 @@ export interface Student {
     observations: Observation[];
     progress: SubjectProgress[];
     customFields: CustomField[];
+    // Gamification fields
+    xp: number;
+    levelName: string;
+    earnedBadgeIds: string[];
 }
 
 export enum MaterialType {
@@ -190,6 +212,32 @@ export interface Quiz {
     questions: QuizQuestion[];
 }
 
+export interface Attachment {
+    id: string;
+    name: string;
+    type: 'link' | 'file';
+    url: string;
+}
+
+export enum HomeworkStatus {
+    PENDING = 'pending',
+    SUBMITTED = 'submitted',
+    GRADED = 'graded',
+}
+
+export interface Homework {
+    id: string;
+    title: string;
+    description: string;
+    dueDate: string; // YYYY-MM-DD
+    attachments: Attachment[];
+    classId: string;
+    subjectId: string;
+    createdAt: string; // ISO String
+    status: HomeworkStatus;
+    grade?: number;
+}
+
 export interface SchoolClass {
     id: string;
     name: string;
@@ -198,6 +246,8 @@ export interface SchoolClass {
     quizzes: Quiz[];
     lessons: Lesson[];
     exercises: Exercise[];
+    timetable: TimetableEntry[];
+    homeworks: Homework[];
 }
 
 export interface Notification {
@@ -215,6 +265,7 @@ export interface ManagedUser {
     createdAt: string;
     childIds?: string[];
     notifications?: Notification[];
+    timetable?: TimetableEntry[];
 }
 
 export interface TodoItem {
@@ -237,4 +288,35 @@ export interface SystemConfig {
     academicYear: string;
     parentPortalEnabled: boolean;
     maintenanceMode: boolean;
+}
+
+export enum AuditLogAction {
+    USER_CREATED = 'إنشاء مستخدم',
+    USER_UPDATED = 'تحديث مستخدم',
+    USER_DELETED = 'حذف مستخدم',
+}
+
+export interface AuditLog {
+    id: string;
+    timestamp: string; // ISO String
+    adminId: string;
+    adminName: string;
+    action: AuditLogAction;
+    targetUserId: string;
+    targetUserName: string;
+    details: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  date: string; // ISO String
+}
+
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon: ReactElement<{ className?: string }>;
 }

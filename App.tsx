@@ -1,6 +1,6 @@
 // FIX: Removed file content delimiters (e.g., --- START OF FILE ---) that were causing compilation errors.
 import React, { useState, useEffect } from 'react';
-import { ManagedUser, SchoolClass, UserRole, AttendanceStatus, ContentStatus, MaterialType, QuestionType } from './types';
+import { ManagedUser, SchoolClass, UserRole, AttendanceStatus, ContentStatus, MaterialType, QuestionType, AuditLog, Announcement, HomeworkStatus } from './types';
 import LandingPage from './components/LandingPage';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
@@ -11,6 +11,13 @@ import { LoadingSpinnerIcon } from './components/icons';
 // --- MOCK DATA CENTRALIZATION ---
 // This data is now managed in the root App component to simulate a shared database.
 // This allows different user dashboards to interact with and update the same data.
+
+const getRelativeDate = (daysOffset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    return date.toISOString().split('T')[0];
+};
+
 
 const mockUsersData: ManagedUser[] = [
     { 
@@ -27,7 +34,20 @@ const mockUsersData: ManagedUser[] = [
             { id: 'n1-t', message: 'قام أحمد العلوي بتسليم واجبه في الرياضيات.', date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), read: false },
             { id: 'n2-t', message: 'رسالة جديدة من ولي أمر التلميذة فاطمة الزهراء.', date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), read: false },
             { id: 'n3-t', message: 'تذكير: اجتماع قسم الأولى إعدادي غداً على الساعة 10 صباحاً.', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), read: true },
-        ]
+        ],
+        timetable: [
+            { day: 'الاثنين', timeSlot: '08:00', subject: 'الرياضيات', className: 'الأولى إعدادي - 1' },
+            { day: 'الاثنين', timeSlot: '14:00', subject: 'الفيزياء', className: 'الثانية إعدادي - 3' },
+            { day: 'الاثنين', timeSlot: '15:00', subject: 'الفيزياء', className: 'الثانية إعدادي - 3' },
+            { day: 'الثلاثاء', timeSlot: '10:00', subject: 'الرياضيات', className: 'الأولى إعدادي - 1' },
+            { day: 'الثلاثاء', timeSlot: '11:00', subject: 'الرياضيات', className: 'الأولى إعدادي - 1' },
+            { day: 'الأربعاء', timeSlot: '08:00', subject: 'الفيزياء', className: 'الأولى إعدادي - 1' },
+            { day: 'الأربعاء', timeSlot: '09:00', subject: 'الفيزياء', className: 'الأولى إعدادي - 1' },
+            { day: 'الأربعاء', timeSlot: '10:00', subject: 'الرياضيات', className: 'الثانية إعدادي - 3' },
+            { day: 'الأربعاء', timeSlot: '11:00', subject: 'الرياضيات', className: 'الثانية إعدادي - 3' },
+            { day: 'الخميس', timeSlot: '08:00', subject: 'الرياضيات', className: 'الأولى إعدادي - 1' },
+            { day: 'الخميس', timeSlot: '09:00', subject: 'الرياضيات', className: 'الأولى إعدادي - 1' },
+        ],
     },
     { 
         id: '4', name: 'السيدة أمينة', email: 'amina.parent@email.com', role: UserRole.PARENT, createdAt: '2023-09-05', childIds: ['s1-1'],
@@ -72,6 +92,9 @@ const mockClassesData: SchoolClass[] = [
             { id: 'cf1', label: 'أسلوب التعلم', value: 'بصري' },
             { id: 'cf2', label: 'ملاحظات طبية', value: 'حساسية من الفول السوداني' },
         ],
+        xp: 125,
+        levelName: 'مستكشف المعرفة',
+        earnedBadgeIds: ['perseverance-1'],
       },
       {
         id: 's1-2', name: 'فاطمة الزهراء',
@@ -88,6 +111,9 @@ const mockClassesData: SchoolClass[] = [
         observations: [],
         progress: [ { subjectName: 'الرياضيات', progress: 95 }, { subjectName: 'العربية', progress: 90 }, { subjectName: 'العلوم', progress: 90 }, { subjectName: 'الفرنسية', progress: 95 } ],
         customFields: [],
+        xp: 0,
+        levelName: 'مستكشف المعرفة',
+        earnedBadgeIds: [],
       },
     ],
     materials: [
@@ -138,16 +164,81 @@ const mockClassesData: SchoolClass[] = [
       },
     ],
     lessons: [
-      // FIX: Added missing 'comments' property to satisfy the Lesson type.
       { id: 'l1-1', title: 'مقدمة في الجبر', description: 'أساسيات الجبر والمتغيرات.', status: ContentStatus.COMPLETED, comments: [] },
-      // FIX: Added missing 'comments' property to satisfy the Lesson type.
       { id: 'l1-2', title: 'الأشكال الهندسية', description: 'التعرف على المثلثات والمربعات.', status: ContentStatus.IN_PROGRESS, comments: [] },
     ],
     exercises: [
-      // FIX: Added missing 'comments' property to satisfy the Exercise type.
-      { id: 'e1-1', title: 'تمارين على المعادلات', description: 'حل 10 معادلات بسيطة.', status: ContentStatus.COMPLETED, comments: [] },
-      // FIX: Added missing 'comments' property to satisfy the Exercise type.
+      { id: 'e1-1', title: 'تمارين على المعادلات', description: 'حل 10 معادلات بسيطة.', status: ContentStatus.COMPLETED, comments: [], score: 88 },
       { id: 'e1-2', title: 'حساب مساحة الأشكال', description: 'تمارين على حساب المساحات.', status: ContentStatus.LOCKED, comments: [] },
+    ],
+    timetable: [
+        { day: 'الاثنين', timeSlot: '08:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الاثنين', timeSlot: '09:00', subject: 'اللغة العربية', teacherName: 'الأستاذة مريم' },
+        { day: 'الاثنين', timeSlot: '10:00', subject: 'اللغة العربية', teacherName: 'الأستاذة مريم' },
+        { day: 'الاثنين', timeSlot: '14:00', subject: 'اللغة الفرنسية', teacherName: 'الأستاذة فاطمة' },
+        { day: 'الاثنين', timeSlot: '15:00', subject: 'اللغة الفرنسية', teacherName: 'الأستاذة فاطمة' },
+
+        { day: 'الثلاثاء', timeSlot: '08:00', subject: 'الاجتماعيات', teacherName: 'الأستاذ يوسف' },
+        { day: 'الثلاثاء', timeSlot: '09:00', subject: 'الاجتماعيات', teacherName: 'الأستاذ يوسف' },
+        { day: 'الثلاثاء', timeSlot: '10:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الثلاثاء', timeSlot: '11:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الثلاثاء', timeSlot: '14:00', subject: 'التربية الاسلامية', teacherName: 'الأستاذ علي' },
+        { day: 'الثلاثاء', timeSlot: '15:00', subject: 'التربية الاسلامية', teacherName: 'الأستاذ علي' },
+
+        { day: 'الأربعاء', timeSlot: '08:00', subject: 'الفيزياء', teacherName: 'الأستاذ خالد' },
+        { day: 'الأربعاء', timeSlot: '09:00', subject: 'الفيزياء', teacherName: 'الأستاذ خالد' },
+        { day: 'الأربعاء', timeSlot: '10:00', subject: 'اللغة العربية', teacherName: 'الأستاذة مريم' },
+        { day: 'الأربعاء', timeSlot: '11:00', subject: 'اللغة العربية', teacherName: 'الأستاذة مريم' },
+
+        { day: 'الخميس', timeSlot: '08:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الخميس', timeSlot: '09:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الخميس', timeSlot: '14:00', subject: 'علوم الحياة والأرض', teacherName: 'الأستاذة نادية' },
+        { day: 'الخميس', timeSlot: '15:00', subject: 'علوم الحياة والأرض', teacherName: 'الأستاذة نادية' },
+
+        { day: 'الجمعة', timeSlot: '08:00', subject: 'الاجتماعيات', teacherName: 'الأستاذ يوسف' },
+        { day: 'الجمعة', timeSlot: '09:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الجمعة', timeSlot: '10:00', subject: 'اللغة الفرنسية', teacherName: 'الأستاذة فاطمة' },
+        { day: 'الجمعة', timeSlot: '11:00', subject: 'اللغة الفرنسية', teacherName: 'الأستاذة فاطمة' },
+    ],
+    homeworks: [
+      {
+        id: 'hw-math-1',
+        title: 'واجب الرياضيات: حل مسائل الجبر',
+        description: 'الرجاء حل جميع المسائل في الفصل 3 من الكتاب وتقديمها قبل الموعد النهائي.',
+        dueDate: getRelativeDate(3),
+        attachments: [
+          { id: 'att-1', name: 'ورقة العمل.pdf', type: 'file', url: '#' },
+        ],
+        classId: 'class-1',
+        subjectId: 'math',
+        createdAt: getRelativeDate(-2),
+        status: HomeworkStatus.PENDING,
+      },
+      {
+        id: 'hw-arabic-1',
+        title: 'واجب اللغة العربية: تحليل قصيدة',
+        description: 'اقرأ القصيدة المرفقة واكتب تحليلاً لا يقل عن 200 كلمة.',
+        dueDate: getRelativeDate(-2), // Overdue
+        attachments: [
+          { id: 'att-2', name: 'قصيدة "الكوليرا" لنازك الملائكة', type: 'link', url: '#' },
+        ],
+        classId: 'class-1',
+        subjectId: 'arabic',
+        createdAt: getRelativeDate(-4),
+        status: HomeworkStatus.SUBMITTED,
+      },
+      {
+        id: 'hw-science-1',
+        title: 'واجب العلوم: تقرير عن الخلية',
+        description: 'إعداد تقرير مفصل عن مكونات الخلية الحيوانية ووظائفها.',
+        dueDate: getRelativeDate(-10),
+        attachments: [],
+        classId: 'class-1',
+        subjectId: 'science',
+        createdAt: getRelativeDate(-15),
+        status: HomeworkStatus.GRADED,
+        grade: 18,
+      }
     ],
   },
   {
@@ -166,13 +257,44 @@ const mockClassesData: SchoolClass[] = [
         observations: [],
         progress: [ { subjectName: 'الرياضيات', progress: 70 }, { subjectName: 'العربية', progress: 70 }, { subjectName: 'العلوم', progress: 75 }, { subjectName: 'الفرنسية', progress: 65 } ],
         customFields: [],
+        xp: 50,
+        levelName: 'مستكشف المعرفة',
+        earnedBadgeIds: [],
       },
     ],
     materials: [],
     quizzes: [],
     lessons: [],
     exercises: [],
+    timetable: [
+        { day: 'الاثنين', timeSlot: '14:00', subject: 'الفيزياء', teacherName: 'الأستاذ خالد' },
+        { day: 'الاثنين', timeSlot: '15:00', subject: 'الفيزياء', teacherName: 'الأستاذ خالد' },
+        { day: 'الأربعاء', timeSlot: '08:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+        { day: 'الأربعاء', timeSlot: '09:00', subject: 'الرياضيات', teacherName: 'الأستاذ خالد' },
+    ],
+    homeworks: [],
   },
+];
+
+const mockAnnouncementsData: Announcement[] = [
+    {
+        id: 'anno-1',
+        title: 'مسابقة القراءة السنوية',
+        content: 'تنطلق المسابقة الثقافية للقراءة يوم الاثنين القادم. ندعو جميع التلاميذ المهتمين بالتسجيل لدى إدارة النادي الثقافي. سيحصل الفائزون على جوائز قيمة. لا تفوتوا الفرصة لإبراز مواهبكم الأدبية!',
+        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: 'anno-2',
+        title: 'ورشة التكنولوجيا والابتكار',
+        content: 'ندعو جميع التلاميذ للمشاركة في ورشة الروبوتات التي ستقام يوم الأربعاء في قاعة الأنشطة. الأماكن محدودة، فسارعوا بالتسجيل. ستتعلمون أساسيات البرمجة وبناء الروبوتات.',
+        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: 'anno-3',
+        title: 'اجتماع أولياء الأمور',
+        content: 'نعلمكم بأن اجتماع أولياء الأمور سيُعقد يوم السبت المقبل لمناقشة تقدم التلاميذ والأنشطة المستقبلية. حضوركم ضروري ومهم.',
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
 ];
 
 
@@ -180,6 +302,8 @@ const App: React.FC = () => {
   const [userRole, setUserRole] = useState<UserRole>(UserRole.NONE);
   const [users, setUsers] = useState<ManagedUser[]>(mockUsersData);
   const [classes, setClasses] = useState<SchoolClass[]>(mockClassesData);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncementsData);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -203,7 +327,7 @@ const App: React.FC = () => {
       case UserRole.STUDENT:
         const studentUser = users.find(u => u.id === '1'); // Mock: log in as Ahmed Alaoui
         if (!studentUser) return <LandingPage onSelectRole={handleRoleSelect} />;
-        return <StudentDashboard onLogout={handleLogout} currentUser={studentUser} setUsers={setUsers} />;
+        return <StudentDashboard onLogout={handleLogout} currentUser={studentUser} setUsers={setUsers} classes={classes} announcements={announcements} />;
       case UserRole.TEACHER:
         const teacherUser = users.find(u => u.role === UserRole.TEACHER);
         if (!teacherUser) return <LandingPage onSelectRole={handleRoleSelect} />;
@@ -214,15 +338,27 @@ const App: React.FC = () => {
                   setAllUsers={setUsers}
                   setClasses={setClasses}
                   currentUser={teacherUser}
+                  announcements={announcements}
                 />;
       case UserRole.ADMIN:
         const adminUser = users.find(u => u.role === UserRole.ADMIN);
         if (!adminUser) return <LandingPage onSelectRole={handleRoleSelect} />;
-        return <AdminDashboard onLogout={handleLogout} initialUsers={users} setUsers={setUsers} currentUser={adminUser}/>;
+        return <AdminDashboard 
+                    onLogout={handleLogout} 
+                    initialUsers={users} 
+                    setUsers={setUsers} 
+                    currentUser={adminUser} 
+                    initialClasses={classes} 
+                    setClasses={setClasses}
+                    auditLogs={auditLogs}
+                    setAuditLogs={setAuditLogs}
+                    announcements={announcements}
+                    setAnnouncements={setAnnouncements}
+                />;
       case UserRole.PARENT:
         const parentUser = users.find(u => u.role === UserRole.PARENT);
         if (!parentUser) return <LandingPage onSelectRole={handleRoleSelect} />; // Fallback
-        return <ParentDashboard onLogout={handleLogout} parentUser={parentUser} setUsers={setUsers} allUsers={users} />;
+        return <ParentDashboard onLogout={handleLogout} parentUser={parentUser} allUsers={users} setUsers={setUsers} classes={classes} announcements={announcements} />;
       default:
         return <LandingPage onSelectRole={handleRoleSelect} />;
     }
@@ -230,16 +366,15 @@ const App: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <LoadingSpinnerIcon className="h-12 w-12 text-blue-600 animate-spin" />
-        <p className="mt-4 text-lg text-gray-600">...جاري تحميل المنصة</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <LoadingSpinnerIcon className="w-16 h-16 text-blue-500 animate-spin" />
+        <p className="mt-4 text-lg text-gray-600">...جاري التحميل</p>
       </div>
     );
   }
 
-
   return (
-    <div className="bg-gray-50 min-h-screen text-gray-800">
+    <div className="App">
       {renderDashboard()}
     </div>
   );

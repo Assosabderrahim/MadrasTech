@@ -1,44 +1,16 @@
 // FIX: Removed file content delimiters (e.g., --- START OF FILE ---) that were causing compilation errors.
-import React, { useState } from 'react';
-import { LogoutIcon, UserIcon, ChartBarIcon, ClipboardListIcon, PencilIcon, BellIcon, EnvelopeIcon, XIcon, LoadingSpinnerIcon } from './icons';
-import { Student, ManagedUser, UserRole, Notification } from '../types';
+import React, { useState, useMemo } from 'react';
+import { LogoutIcon, UserIcon, ChartBarIcon, ClipboardListIcon, PencilIcon, BellIcon, EnvelopeIcon, XIcon, LoadingSpinnerIcon, ClockIcon, InformationCircleIcon } from './icons';
+import { Student, ManagedUser, UserRole, Notification, SchoolClass, Announcement } from '../types';
 
 interface DashboardProps {
   onLogout: () => void;
   parentUser: ManagedUser;
   allUsers: ManagedUser[];
   setUsers: React.Dispatch<React.SetStateAction<ManagedUser[]>>;
+  classes: SchoolClass[];
+  announcements: Announcement[];
 }
-
-// Mock Data for the parent's child (can be replaced with dynamic data later)
-const mockChildData: Student = {
-    id: 's1-1',
-    name: 'أحمد العلوي',
-    grades: [
-      { subject: 'الرياضيات', grade: 17 },
-      { subject: 'العربية', grade: 18 },
-      { subject: 'العلوم', grade: 16 },
-      { subject: 'الفرنسية', grade: 18 }
-    ],
-    attendance: { present: 180, absent: 5 },
-    attendanceRecords: [],
-    activities: ['نادي الشطرنج', 'المسابقة الثقافية'],
-    notes: [
-        { id: 'pn1', text: 'تلميذ مجتهد ومشارك.', date: '2024-04-15T09:00:00.000Z' },
-        { id: 'pn2', text: 'يحتاج إلى تحسين خطه.', date: '2024-03-10T11:00:00.000Z' }
-    ],
-    observations: [],
-    progress: [
-        { subjectName: 'الرياضيات', progress: 85 },
-        { subjectName: 'العربية', progress: 90 },
-        { subjectName: 'العلوم', progress: 80 },
-        { subjectName: 'الفرنسية', progress: 90 },
-    ],
-    customFields: [
-        { id: 'pcf1', label: 'أسلوب التعلم', value: 'بصري' },
-        { id: 'pcf2', label: 'ملاحظات طبية', value: 'حساسية من الفول السوداني' },
-    ],
-};
 
 const MessagingModal: React.FC<{
     onClose: () => void;
@@ -125,14 +97,55 @@ const MessagingModal: React.FC<{
     );
 };
 
+const AnnouncementsComponent: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => {
+    if (!announcements || announcements.length === 0) return null;
+    const latestAnnouncements = [...announcements]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 2);
 
-const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUsers, setUsers }) => {
-    const student = mockChildData;
+    return (
+        <div className="mb-8 p-6 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+            <h3 className="text-xl font-bold text-amber-800 mb-4 flex items-center">
+                <InformationCircleIcon className="h-6 w-6 ml-3 text-amber-500" />
+                أحدث إعلانات المؤسسة
+            </h3>
+            <div className="space-y-4">
+                {latestAnnouncements.map(ann => (
+                    <div key={ann.id} className="border-b border-amber-200 pb-3 last:border-b-0 last:pb-0">
+                        <h4 className="font-semibold text-gray-800">{ann.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{ann.content}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUsers, setUsers, classes, announcements }) => {
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [isMessagingModalOpen, setIsMessagingModalOpen] = useState(false);
+
+    const { student, studentClass } = useMemo(() => {
+        const childId = parentUser.childIds?.[0];
+        if (!childId) return { student: null, studentClass: null };
+
+        let foundStudent: Student | null = null;
+        let foundClass: SchoolClass | null = null;
+
+        for (const schoolClass of classes) {
+            const s = schoolClass.students.find(s => s.id === childId);
+            if (s) {
+                foundStudent = s;
+                foundClass = schoolClass;
+                break;
+            }
+        }
+        return { student: foundStudent, studentClass: foundClass };
+    }, [parentUser, classes]);
     
-    const attendanceTotal = student.attendance.present + student.attendance.absent;
-    const attendancePercentage = attendanceTotal > 0 ? Math.round((student.attendance.present / attendanceTotal) * 100) : 0;
+    const attendanceTotal = student ? student.attendance.present + student.attendance.absent : 0;
+    const attendancePercentage = attendanceTotal > 0 && student ? Math.round((student.attendance.present / attendanceTotal) * 100) : 0;
     const maxGrade = 20;
 
     const unreadCount = parentUser.notifications?.filter(n => !n.read).length || 0;
@@ -166,6 +179,24 @@ const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUs
         return 'الآن';
     }
 
+    if (!student || !studentClass) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-100">
+                <div className="text-center">
+                    <p className="text-xl text-gray-600">لم يتم العثور على بيانات التلميذ.</p>
+                    <button onClick={onLogout} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg">تسجيل الخروج</button>
+                </div>
+            </div>
+        );
+    }
+    
+    const timetable = studentClass.timetable;
+    const daysOfWeek = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const timeSlots = Array.from(new Set(timetable.map(t => t.timeSlot))).sort();
+    const timetableMap = new Map<string, string>();
+    timetable.forEach(t => {
+        timetableMap.set(`${t.day}-${t.timeSlot}`, t.subject);
+    });
 
   return (
     <>
@@ -186,7 +217,7 @@ const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUs
                         )}
                     </button>
                     {notificationsOpen && (
-                        <div className="absolute top-full mt-2 left-0 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl border z-20 animate-fade-in">
+                        <div className="absolute top-full mt-2 right-0 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl border z-20 animate-fade-in">
                            <div className="p-3 font-bold text-gray-700 border-b">الإشعارات</div>
                             {parentUser.notifications && parentUser.notifications.length > 0 ? (
                                 <ul>
@@ -210,6 +241,7 @@ const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUs
             </div>
           </header>
           <main className="animate-fade-in">
+            <AnnouncementsComponent announcements={announcements} />
              <div className="bg-white rounded-xl shadow-lg p-8">
                 <div className="flex items-center mb-8 border-b pb-6">
                     <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mr-6">
@@ -237,6 +269,43 @@ const ParentDashboard: React.FC<DashboardProps> = ({ onLogout, parentUser, allUs
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                         <div className="p-6 bg-gray-50 rounded-lg">
+                            <h3 className="text-2xl font-bold text-gray-700 mb-4 flex items-center">
+                                <ClockIcon className="h-6 w-6 ml-3 text-amber-500" /> استعمال الزمن الأسبوعي
+                            </h3>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full border-collapse text-center">
+                                    <thead>
+                                        <tr className="bg-amber-100">
+                                            <th className="p-3 font-semibold text-sm text-amber-800 border border-amber-200">الوقت</th>
+                                            {daysOfWeek.map(day => (
+                                                <th key={day} className="p-3 font-semibold text-sm text-amber-800 border border-amber-200">{day}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {timeSlots.map(slot => (
+                                            <tr key={slot}>
+                                                <td className="p-3 font-semibold text-sm text-gray-700 bg-gray-100 border border-gray-200">{slot}</td>
+                                                {daysOfWeek.map(day => {
+                                                    const subject = timetableMap.get(`${day}-${slot}`);
+                                                    return (
+                                                        <td key={day} className="p-3 text-sm text-gray-800 border border-gray-200 whitespace-nowrap">
+                                                            {subject ? (
+                                                                <span className="bg-amber-50 text-amber-700 font-medium py-1 px-3 rounded-full">{subject}</span>
+                                                            ) : (
+                                                                <span className="text-gray-400">-</span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
