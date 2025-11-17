@@ -1,4 +1,3 @@
-// FIX: Removed file content delimiters (e.g., --- START OF FILE ---) that were causing compilation errors.
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   LogoutIcon,
@@ -46,7 +45,6 @@ import {
     Homework,
     Attachment,
     Announcement,
-    // FIX: Import UserRole to resolve 'Cannot find name' error.
     UserRole,
 } from '../types';
 
@@ -62,7 +60,6 @@ interface TeacherDashboardProps {
   announcements: Announcement[];
 }
 
-// FIX: Define missing component CreateClassModal.
 const CreateClassModal: React.FC<{
     onClose: () => void;
     onCreate: (className: string) => void;
@@ -71,31 +68,34 @@ const CreateClassModal: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onCreate(className);
+        if (className.trim()) {
+            onCreate(className.trim());
+        }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">إنشاء قسم جديد</h3>
-                    <button onClick={onClose}><XIcon className="h-6 w-6 text-gray-500" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 transition-colors"><XIcon className="h-6 w-6 text-gray-500" /></button>
                 </div>
                 <form onSubmit={handleSubmit}>
                     <div className="p-6">
-                        <label className="block text-sm font-medium text-gray-700">اسم القسم</label>
+                        <label htmlFor="className" className="block text-sm font-medium text-gray-700">اسم القسم</label>
                         <input
                             type="text"
+                            id="className"
                             value={className}
                             onChange={e => setClassName(e.target.value)}
-                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 transition"
                             required
                             placeholder="مثال: الأولى إعدادي - 2"
                         />
                     </div>
-                    <div className="flex justify-end space-x-2 p-4 bg-gray-50 border-t">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md">إلغاء</button>
-                        <button type="submit" className="px-4 py-2 bg-teal-500 text-white rounded-md">إنشاء</button>
+                    <div className="flex justify-end space-x-2 space-x-reverse p-4 bg-gray-50 border-t">
+                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300 transition-colors">إلغاء</button>
+                        <button type="submit" className="px-4 py-2 bg-teal-500 text-white font-semibold rounded-md hover:bg-teal-600 transition-colors">إنشاء</button>
                     </div>
                 </form>
             </div>
@@ -103,7 +103,6 @@ const CreateClassModal: React.FC<{
     );
 };
 
-// FIX: Define missing component GradeSummaryView.
 const GradeSummaryView: React.FC<{ selectedClass: SchoolClass }> = ({ selectedClass }) => {
     const subjects = useMemo(() => {
         const allSubjects = new Set<string>();
@@ -114,26 +113,26 @@ const GradeSummaryView: React.FC<{ selectedClass: SchoolClass }> = ({ selectedCl
     }, [selectedClass.students]);
 
     return (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
             <h3 className="text-xl font-bold mb-4">ملخص نقط التلاميذ</h3>
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">اسم التلميذ</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اسم التلميذ</th>
                             {subjects.map(subject => (
-                                <th key={subject} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">{subject}</th>
+                                <th key={subject} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{subject}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {selectedClass.students.map(student => (
-                            <tr key={student.id}>
+                            <tr key={student.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
                                 {subjects.map(subject => {
                                     const grade = student.grades.find(g => g.subject === subject);
                                     return (
-                                        <td key={subject} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                                        <td key={subject} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center font-mono">
                                             {grade ? `${grade.grade}/20` : '-'}
                                         </td>
                                     );
@@ -147,24 +146,15 @@ const GradeSummaryView: React.FC<{ selectedClass: SchoolClass }> = ({ selectedCl
     );
 };
 
-// FIX: Define missing component ProgressSummaryView.
 const ProgressSummaryView: React.FC<{ selectedClass: SchoolClass }> = ({ selectedClass }) => {
-    const subjects = useMemo(() => {
-        const allSubjects = new Set<string>();
-        selectedClass.students.forEach(s => {
-            s.progress.forEach(p => allSubjects.add(p.subjectName));
-        });
-        return Array.from(allSubjects);
-    }, [selectedClass.students]);
-
     return (
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
             <h3 className="text-xl font-bold mb-4">ملخص تقدم التلاميذ</h3>
             <div className="space-y-6">
                 {selectedClass.students.map(student => (
-                    <div key={student.id} className="p-4 border rounded-lg">
-                        <h4 className="font-bold text-lg mb-3">{student.name}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div key={student.id} className="p-4 border rounded-lg bg-gray-50">
+                        <h4 className="font-bold text-lg mb-3 text-gray-800">{student.name}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {student.progress.map(p => (
                                 <div key={p.subjectName}>
                                     <div className="flex justify-between items-center text-sm mb-1">
@@ -184,36 +174,38 @@ const ProgressSummaryView: React.FC<{ selectedClass: SchoolClass }> = ({ selecte
     );
 };
 
-// FIX: Define missing component HomeworkModal.
 const HomeworkModal: React.FC<{
     homework: Homework | null;
     onClose: () => void;
     onSave: (homework: Homework) => void;
     classId: string;
-}> = ({ homework, onClose, onSave, classId }) => {
-    const [formData, setFormData] = useState<Omit<Homework, 'id' | 'createdAt' | 'status' | 'classId' | 'subjectId'> & { classId: string, status: any, subjectId: string }>({ // status is complex, cheating a bit for this mock
+    subjects: { id: string, name: string }[];
+}> = ({ homework, onClose, onSave, classId, subjects }) => {
+    const [formData, setFormData] = useState<Partial<Homework>>({
         title: homework?.title || '',
         description: homework?.description || '',
         dueDate: homework?.dueDate || '',
         attachments: homework?.attachments || [],
-        classId: homework?.classId || classId,
-        status: homework?.status,
-        subjectId: homework?.subjectId || '',
+        classId: classId,
+        subjectId: homework?.subjectId || subjects[0]?.id || ''
     });
-
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
             ...formData,
-            id: homework?.id || '',
+            id: homework?.id || `hw-${Date.now()}`,
             createdAt: homework?.createdAt || new Date().toISOString(),
-            status: homework?.status || 'pending'
+            status: homework?.status || 'pending',
         } as Homework);
     };
+    
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">{homework ? 'تعديل الواجب' : 'إضافة واجب جديد'}</h3>
@@ -221,15 +213,18 @@ const HomeworkModal: React.FC<{
                 </div>
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
-                        <input type="text" placeholder="العنوان" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full p-2 border rounded" required />
-                        <textarea placeholder="الوصف" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full p-2 border rounded" rows={4} required />
+                        <input type="text" name="title" placeholder="العنوان" value={formData.title} onChange={handleChange} className="w-full p-2 border rounded" required />
+                        <select name="subjectId" value={formData.subjectId} onChange={handleChange} className="w-full p-2 border rounded" required>
+                             {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                        <textarea name="description" placeholder="الوصف" value={formData.description} onChange={handleChange} className="w-full p-2 border rounded" rows={4} required />
                         <div>
                             <label className="text-sm">تاريخ التسليم</label>
-                            <input type="date" value={formData.dueDate} onChange={e => setFormData({ ...formData, dueDate: e.target.value })} className="w-full p-2 border rounded" required />
+                            <input type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} className="w-full p-2 border rounded" required />
                         </div>
                         {/* Attachment UI can be added here */}
                     </div>
-                    <div className="flex justify-end space-x-2 p-4 bg-gray-50 border-t">
+                    <div className="flex justify-end space-x-2 space-x-reverse p-4 bg-gray-50 border-t">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md">إلغاء</button>
                         <button type="submit" className="px-4 py-2 bg-teal-500 text-white rounded-md">حفظ</button>
                     </div>
@@ -239,7 +234,6 @@ const HomeworkModal: React.FC<{
     );
 };
 
-// FIX: Define missing component HomeworkManagementView.
 const HomeworkManagementView: React.FC<{
     selectedClass: SchoolClass,
     initialClasses: SchoolClass[],
@@ -249,21 +243,30 @@ const HomeworkManagementView: React.FC<{
 }> = ({ selectedClass, initialClasses, setClasses, allUsers, setAllUsers }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingHomework, setEditingHomework] = useState<Homework | null>(null);
+    
+    // In a real app, subjects would be managed globally. Here we derive them.
+    const classSubjects = useMemo(() => {
+        const subjectSet = new Set<{id: string, name: string}>();
+        selectedClass.timetable.forEach(t => subjectSet.add({id: t.subject, name: t.subject})); // Mocking ID = name
+        return Array.from(subjectSet);
+    }, [selectedClass.timetable]);
+
 
     const handleSaveHomework = (homework: Homework) => {
         const isEditing = selectedClass.homeworks.some(hw => hw.id === homework.id);
         const updatedHomeworks = isEditing
             ? selectedClass.homeworks.map(hw => (hw.id === homework.id ? homework : hw))
-            : [...selectedClass.homeworks, { ...homework, id: `hw-${Date.now()}` }];
+            : [...selectedClass.homeworks, homework];
 
         setClasses(initialClasses.map(c => c.id === selectedClass.id ? { ...c, homeworks: updatedHomeworks } : c));
 
         // Notify students
         if (!isEditing) {
             const studentIds = new Set(selectedClass.students.map(s => s.id));
+             const subjectName = classSubjects.find(s => s.id === homework.subjectId)?.name || 'مادة غير محددة';
             const newNotification: Notification = {
                 id: `notif-${Date.now()}`,
-                message: `تمت إضافة واجب جديد في مادة [المادة]: "${homework.title}"`,
+                message: `تمت إضافة واجب جديد في ${subjectName}: "${homework.title}"`,
                 date: new Date().toISOString(),
                 read: false,
             };
@@ -287,7 +290,7 @@ const HomeworkManagementView: React.FC<{
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold">إدارة الواجبات المنزلية</h3>
                     <button onClick={() => { setEditingHomework(null); setIsModalOpen(true); }} className="flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">
@@ -296,14 +299,14 @@ const HomeworkManagementView: React.FC<{
                 </div>
                 <div className="space-y-4">
                     {selectedClass.homeworks.map(hw => (
-                        <div key={hw.id} className="p-4 border rounded-lg flex justify-between items-center">
+                        <div key={hw.id} className="p-4 border rounded-lg flex justify-between items-center bg-gray-50">
                             <div>
                                 <p className="font-bold">{hw.title}</p>
                                 <p className="text-sm text-gray-500">تاريخ التسليم: {hw.dueDate}</p>
                             </div>
-                            <div className="flex space-x-2">
-                                <button onClick={() => { setEditingHomework(hw); setIsModalOpen(true); }} className="p-2 text-gray-500 hover:text-blue-600"><PencilIcon className="h-5 w-5" /></button>
-                                <button onClick={() => handleDeleteHomework(hw.id)} className="p-2 text-gray-500 hover:text-red-600"><TrashIcon className="h-5 w-5" /></button>
+                            <div className="flex space-x-2 space-x-reverse">
+                                <button onClick={() => { setEditingHomework(hw); setIsModalOpen(true); }} className="p-2 text-gray-500 hover:text-blue-600 rounded-full hover:bg-blue-100 transition-colors"><PencilIcon className="h-5 w-5" /></button>
+                                <button onClick={() => handleDeleteHomework(hw.id)} className="p-2 text-gray-500 hover:text-red-600 rounded-full hover:bg-red-100 transition-colors"><TrashIcon className="h-5 w-5" /></button>
                             </div>
                         </div>
                     ))}
@@ -316,43 +319,46 @@ const HomeworkManagementView: React.FC<{
                     onClose={() => { setIsModalOpen(false); setEditingHomework(null); }}
                     onSave={handleSaveHomework}
                     classId={selectedClass.id}
+                    subjects={classSubjects}
                 />
             )}
         </>
     );
 };
 
-// FIX: Define missing component AssignStudentModal.
 const AssignStudentModal: React.FC<{
     selectedClass: SchoolClass,
     initialClasses: SchoolClass[],
     onClose: () => void,
     onAssign: (student: Student) => void
 }> = ({ selectedClass, initialClasses, onClose, onAssign }) => {
-    const otherStudents = initialClasses
-      .filter(c => c.id !== selectedClass.id)
-      .flatMap(c => c.students)
-      .filter(s => !selectedClass.students.some(cs => cs.id === s.id));
+    const allStudents = useMemo(() => 
+        initialClasses.flatMap(c => c.students), 
+    [initialClasses]);
+
+    const availableStudents = allStudents.filter(
+        s => !selectedClass.students.some(cs => cs.id === s.id)
+    );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">إضافة تلميذ إلى القسم</h3>
                     <button onClick={onClose}><XIcon className="h-6 w-6 text-gray-500" /></button>
                 </div>
                 <div className="p-4 overflow-y-auto">
-                    {otherStudents.length > 0 ? (
+                    {availableStudents.length > 0 ? (
                         <ul className="space-y-2">
-                            {otherStudents.map(student => (
+                            {availableStudents.map(student => (
                                 <li key={student.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                                     <span>{student.name}</span>
-                                    <button onClick={() => { onAssign(student); onClose(); }} className="px-3 py-1 bg-teal-500 text-white text-sm rounded">إضافة</button>
+                                    <button onClick={() => { onAssign(student); }} className="px-3 py-1 bg-teal-500 text-white text-sm rounded hover:bg-teal-600">إضافة</button>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        <p className="text-center text-gray-500 py-4">لا يوجد تلاميذ متاحون للإضافة.</p>
+                        <p className="text-center text-gray-500 py-4">جميع التلاميذ تم تعيينهم في أقسام.</p>
                     )}
                 </div>
                  <div className="flex justify-end p-4 bg-gray-50 border-t">
@@ -363,7 +369,6 @@ const AssignStudentModal: React.FC<{
     );
 };
 
-// FIX: Define missing component QuizzesListModal.
 const QuizzesListModal: React.FC<{
     quizzes: Quiz[],
     onUpdate: (quizzes: Quiz[]) => void,
@@ -374,24 +379,24 @@ const QuizzesListModal: React.FC<{
     const handleAddQuiz = () => {
         const newQuiz: Quiz = {
             id: `quiz-${Date.now()}`,
-            title: 'اختبار جديد',
+            title: 'اختبار جديد (بدون عنوان)',
             questions: []
         };
         onEditQuiz(newQuiz);
     };
 
     const handleDeleteQuiz = (quizId: string) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+        if (window.confirm('هل أنت متأكد من حذف هذا الاختبار؟ سيتم حذف جميع أسئلته بشكل نهائي.')) {
             onUpdate(quizzes.filter(q => q.id !== quizId));
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">إدارة الاختبارات</h3>
-                    <button onClick={onClose}><XIcon className="h-6 w-6" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200"><XIcon className="h-6 w-6" /></button>
                 </div>
                 <div className="p-4 overflow-y-auto">
                     <div className="flex justify-end mb-4">
@@ -406,13 +411,13 @@ const QuizzesListModal: React.FC<{
                                     <p className="font-semibold">{quiz.title}</p>
                                     <p className="text-sm text-gray-600">{quiz.questions.length} أسئلة</p>
                                 </div>
-                                <div className="flex space-x-2">
-                                    <button onClick={() => onEditQuiz(quiz)} className="p-2 text-gray-500 hover:text-blue-600"><PencilIcon className="h-5 w-5" /></button>
-                                    <button onClick={() => handleDeleteQuiz(quiz.id)} className="p-2 text-gray-500 hover:text-red-600"><TrashIcon className="h-5 w-5" /></button>
+                                <div className="flex space-x-2 space-x-reverse">
+                                    <button onClick={() => onEditQuiz(quiz)} className="p-2 text-gray-500 hover:text-blue-600 rounded-full hover:bg-blue-100"><PencilIcon className="h-5 w-5" /></button>
+                                    <button onClick={() => handleDeleteQuiz(quiz.id)} className="p-2 text-gray-500 hover:text-red-600 rounded-full hover:bg-red-100"><TrashIcon className="h-5 w-5" /></button>
                                 </div>
                             </div>
                         ))}
-                        {quizzes.length === 0 && <p className="text-center text-gray-500 py-4">لا توجد اختبارات.</p>}
+                        {quizzes.length === 0 && <p className="text-center text-gray-500 py-4">لا توجد اختبارات. انقر على "إضافة اختبار" للبدء.</p>}
                     </div>
                 </div>
             </div>
@@ -420,7 +425,6 @@ const QuizzesListModal: React.FC<{
     );
 };
 
-// FIX: Define missing component QuizEditorModal.
 const QuizEditorModal: React.FC<{
     quiz: Quiz,
     onClose: () => void,
@@ -485,47 +489,51 @@ const QuizEditorModal: React.FC<{
         const question = updatedQuestions[qIndex];
         if (question.options && question.options.length > 1) { // must have at least one option
             question.options = question.options.filter((_, idx) => idx !== oIndex);
+             if (!question.options.some(o => o.isCorrect)) {
+                question.options[0].isCorrect = true;
+            }
             setLocalQuiz(prev => ({...prev, questions: updatedQuestions}));
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">محرر الاختبار</h3>
-                    <button onClick={onClose}><XIcon className="h-6 w-6" /></button>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200"><XIcon className="h-6 w-6" /></button>
                 </div>
                 <div className="p-4 overflow-y-auto space-y-4">
                     <div>
                         <label className="font-semibold">عنوان الاختبار</label>
-                        <input type="text" value={localQuiz.title} onChange={e => handleQuizTitleChange(e.target.value)} className="w-full p-2 border rounded" />
+                        <input type="text" value={localQuiz.title} onChange={e => handleQuizTitleChange(e.target.value)} className="w-full p-2 border rounded-md" />
                     </div>
                     {localQuiz.questions.map((q, qIndex) => (
                         <div key={q.id} className="p-4 border rounded-lg bg-gray-50">
                             <div className="flex justify-between items-center mb-2">
                                 <label className="font-semibold">السؤال {qIndex + 1}</label>
-                                <button onClick={() => handleDeleteQuestion(qIndex)} className="text-red-500"><TrashIcon className="h-5 w-5"/></button>
+                                <button onClick={() => handleDeleteQuestion(qIndex)} className="p-1 text-red-500 rounded-full hover:bg-red-100"><TrashIcon className="h-5 w-5"/></button>
                             </div>
-                            <textarea value={q.questionText} onChange={e => handleQuestionChange(qIndex, e.target.value)} className="w-full p-2 border rounded" rows={2}/>
+                            <textarea value={q.questionText} onChange={e => handleQuestionChange(qIndex, e.target.value)} className="w-full p-2 border rounded" rows={2} placeholder="نص السؤال"/>
                             {q.type === QuestionType.MULTIPLE_CHOICE && q.options && (
                                 <div className="mt-2 space-y-2">
+                                    <p className="text-sm font-medium text-gray-600">الخيارات (حدد الإجابة الصحيحة):</p>
                                     {q.options.map((opt, oIndex) => (
                                         <div key={opt.id} className="flex items-center gap-2">
-                                            <input type="radio" name={`correct-${q.id}`} checked={opt.isCorrect} onChange={() => handleCorrectOptionChange(qIndex, oIndex)} />
-                                            <input type="text" value={opt.text} onChange={e => handleOptionChange(qIndex, oIndex, e.target.value)} className="flex-grow p-1 border rounded" />
-                                            <button onClick={() => handleDeleteOption(qIndex, oIndex)} className="text-red-500"><XIcon className="h-4 w-4"/></button>
+                                            <input type="radio" name={`correct-${q.id}`} checked={opt.isCorrect} onChange={() => handleCorrectOptionChange(qIndex, oIndex)} className="w-4 h-4 text-teal-600 focus:ring-teal-500"/>
+                                            <input type="text" value={opt.text} onChange={e => handleOptionChange(qIndex, oIndex, e.target.value)} className="flex-grow p-1 border rounded" placeholder={`الخيار ${oIndex + 1}`} />
+                                            <button onClick={() => handleDeleteOption(qIndex, oIndex)} className="text-red-500 disabled:opacity-50" disabled={q.options && q.options.length <= 1}><XIcon className="h-4 w-4"/></button>
                                         </div>
                                     ))}
-                                    <button onClick={() => handleAddOption(qIndex)} className="text-sm text-teal-600">+ إضافة خيار</button>
+                                    <button onClick={() => handleAddOption(qIndex)} className="text-sm text-teal-600 hover:underline">+ إضافة خيار</button>
                                 </div>
                             )}
                              {/* Add UI for other question types here */}
                         </div>
                     ))}
-                    <button onClick={handleAddQuestion} className="w-full p-2 border-2 border-dashed rounded-lg text-teal-600 hover:bg-teal-50">+ إضافة سؤال جديد</button>
+                    <button onClick={handleAddQuestion} className="w-full p-2 border-2 border-dashed rounded-lg text-teal-600 hover:bg-teal-50 transition-colors">+ إضافة سؤال جديد</button>
                 </div>
-                <div className="flex justify-end space-x-2 p-4 bg-gray-50 border-t">
+                <div className="flex justify-end space-x-2 space-x-reverse p-4 bg-gray-50 border-t">
                     <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md">إلغاء</button>
                     <button onClick={() => onSave(localQuiz)} className="px-4 py-2 bg-teal-500 text-white rounded-md">حفظ الاختبار</button>
                 </div>
@@ -681,7 +689,7 @@ const MaterialsListModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-xl font-bold">إدارة المواد التعليمية</h3>
@@ -692,7 +700,7 @@ const MaterialsListModal: React.FC<{
                         {localMaterials.map(material => (
                             <div key={material.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                                 <span>{material.name} ({material.type})</span>
-                                <button onClick={() => handleDeleteMaterial(material.id)} className="text-red-500"><TrashIcon className="h-5 w-5" /></button>
+                                <button onClick={() => handleDeleteMaterial(material.id)} className="text-red-500 p-1 rounded-full hover:bg-red-100"><TrashIcon className="h-5 w-5" /></button>
                             </div>
                         ))}
                     </div>
@@ -709,11 +717,11 @@ const MaterialsListModal: React.FC<{
                         <select value={newMaterialType} onChange={e => setNewMaterialType(e.target.value as MaterialType)} className="p-2 border rounded">
                             {Object.values(MaterialType).map(type => <option key={type} value={type}>{type}</option>)}
                         </select>
-                        <button onClick={handleAddMaterial} className="px-4 py-2 bg-teal-500 text-white rounded">إضافة</button>
+                        <button onClick={handleAddMaterial} className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600">إضافة</button>
                     </div>
                 </div>
                 <div className="flex justify-end p-4 border-t">
-                    <button onClick={handleSaveChanges} className="px-6 py-2 bg-teal-600 text-white rounded">حفظ التغييرات</button>
+                    <button onClick={handleSaveChanges} className="px-6 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">حفظ التغييرات</button>
                 </div>
             </div>
         </div>
@@ -753,14 +761,15 @@ const ContentManagementView: React.FC<{
         }
         handleUpdateQuizzes(updatedQuizzes);
         setEditingQuiz(null);
+        setIsQuizzesModalOpen(true);
     };
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
                 <div className="bg-white rounded-xl shadow-md p-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold">إدارة المواد التعليمية</h3>
+                        <h3 className="text-xl font-bold">المواد التعليمية</h3>
                         <button onClick={() => setIsMaterialsModalOpen(true)} className="flex items-center text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-md hover:bg-teal-100">
                             <PencilIcon className="h-4 w-4 ml-2"/> إدارة
                         </button>
@@ -777,7 +786,7 @@ const ContentManagementView: React.FC<{
                 </div>
                 <div className="bg-white rounded-xl shadow-md p-6">
                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold">إدارة الاختبارات</h3>
+                        <h3 className="text-xl font-bold">الاختبارات</h3>
                          <button onClick={() => setIsQuizzesModalOpen(true)} className="flex items-center text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-md hover:bg-teal-100">
                             <PencilIcon className="h-4 w-4 ml-2"/> إدارة
                         </button>
@@ -865,7 +874,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onLogout, initialCl
   const handleCreateClass = (className: string) => {
     if (!className.trim()) return;
 
-    // FIX: Add missing `timetable` property to align with the `SchoolClass` type.
     const newClass: SchoolClass = {
         id: `class-${Date.now()}`,
         name: className.trim(),
@@ -1100,7 +1108,7 @@ const ClassDashboard: React.FC<{
                 </div>
             </header>
             <div className="border-b border-gray-200 mb-6">
-                <nav className="flex space-x-2" dir="ltr">
+                <nav className="flex space-x-2 space-x-reverse" >
                     <NavTab view="students" label="التلاميذ" Icon={UsersIcon} />
                     <NavTab view="content" label="المحتوى" Icon={BookOpenIcon} />
                     <NavTab view="homework" label="الواجبات" Icon={ClipboardListIcon} />
@@ -1167,7 +1175,7 @@ const StudentsListView: React.FC<{
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 animate-fade-in">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                      <div className="relative flex-grow w-full sm:w-auto">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -1202,7 +1210,7 @@ const StudentsListView: React.FC<{
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredStudents.length > 0 ? (
                                 filteredStudents.map(student => (
-                                    <tr key={student.id}>
+                                    <tr key={student.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{calculateAverage(student.grades)}/20</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{student.attendance.present} حاضر / {student.attendance.absent} غائب</td>
@@ -1345,7 +1353,7 @@ const StudentProfileModal: React.FC<{
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in p-4">
                 <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                     <div className="flex justify-between items-center mb-6 border-b pb-4">
                         <h3 className="text-2xl font-bold text-gray-800">ملف التلميذ: {localStudent.name}</h3>
@@ -1444,7 +1452,7 @@ const StudentProfileModal: React.FC<{
                     <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
                         <h3 className="text-xl font-bold mb-4">إرسال رسالة إلى ولي الأمر</h3>
                         <textarea value={messageText} onChange={e => setMessageText(e.target.value)} rows={5} className="w-full p-2 border rounded" placeholder="اكتب رسالتك هنا..."></textarea>
-                        <div className="flex justify-end space-x-2 mt-4">
+                        <div className="flex justify-end space-x-2 space-x-reverse mt-4">
                             <button onClick={() => setIsMessageModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded">إلغاء</button>
                             <button onClick={handleSendMessage} className="px-4 py-2 bg-teal-500 text-white rounded">إرسال</button>
                         </div>
